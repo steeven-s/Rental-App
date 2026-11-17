@@ -1,0 +1,39 @@
+
+.scan-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+}
+
+.scan-brand-name {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #2563eb;
+    line-height: 1;
+}
+
+.scan-brand-subtitle {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #ffffff;
+    margin-top: 5px;
+}
+
+.scan-brand-tagline {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    color: #9ca3af;
+    margin-top: 8px;
+}
+
+.scan-brand.light .scan-brand-subtitle {
+    color: #111827;
+}
+
+.scan-brand.light .scan-brand-tagline {
+    color: #64748b;
+}
