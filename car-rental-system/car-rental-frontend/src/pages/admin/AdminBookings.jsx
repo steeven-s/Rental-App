@@ -3,11 +3,15 @@ import { useEffect, useMemo, useState } from "react";
 import adminBookingService from "../../services/adminBookingService";
 import "./AdminBookings.css";
 
+const EMPLOYEES = ["Naveen", "Charan", "Ashok", "Steeven"];
+
 function AdminBookings() {
     const [bookings, setBookings] = useState([]);
     const [activeFilter, setActiveFilter] = useState("ALL");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [actionLoading, setActionLoading] = useState({});
+    const [successMessage, setSuccessMessage] = useState("");
 
     useEffect(() => {
         fetchBookings();
@@ -19,7 +23,6 @@ function AdminBookings() {
             setError("");
 
             const data = await adminBookingService.getAllBookings();
-
             setBookings(Array.isArray(data) ? data : []);
         } catch (err) {
             setError(
@@ -87,6 +90,129 @@ function AdminBookings() {
 
     const getStatusClass = (status) => {
         return `booking-status booking-status-${status?.toLowerCase()}`;
+    };
+
+    const getDisplayValue = (value) => {
+        return value && String(value).trim() ? value : "NA";
+    };
+
+    const setBookingLoading = (bookingId, action, value) => {
+        setActionLoading(previous => ({
+            ...previous,
+            [`${bookingId}-${action}`]: value
+        }));
+    };
+
+    const handleApprove = async (booking) => {
+        const bookingId = booking.bookingId;
+
+        if (booking.status !== "PENDING") return;
+
+        try {
+            setBookingLoading(bookingId, "status", true);
+            setError("");
+            setSuccessMessage("");
+
+            await adminBookingService.approveBooking(bookingId);
+
+            setBookings(previous =>
+                previous.map(item =>
+                    item.bookingId === bookingId
+                        ? { ...item, status: "CONFIRMED" }
+                        : item
+                )
+            );
+
+            setSuccessMessage(
+                `Booking #${bookingId} approved successfully.`
+            );
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Unable to approve booking."
+            );
+        } finally {
+            setBookingLoading(bookingId, "status", false);
+        }
+    };
+
+    const handleReject = async (booking) => {
+        const bookingId = booking.bookingId;
+
+        if (booking.status !== "PENDING") return;
+
+        const confirmed = window.confirm(
+            `Are you sure you want to reject booking #${bookingId}? This will cancel the booking.`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            setBookingLoading(bookingId, "status", true);
+            setError("");
+            setSuccessMessage("");
+
+            await adminBookingService.rejectBooking(bookingId);
+
+            setBookings(previous =>
+                previous.map(item =>
+                    item.bookingId === bookingId
+                        ? { ...item, status: "CANCELLED" }
+                        : item
+                )
+            );
+
+            setSuccessMessage(
+                `Booking #${bookingId} rejected and cancelled successfully.`
+            );
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Unable to reject booking."
+            );
+        } finally {
+            setBookingLoading(bookingId, "status", false);
+        }
+    };
+
+    const handleAssign = async (bookingId, assignedTo) => {
+        if (!assignedTo) return;
+
+        const booking = bookings.find(
+            item => item.bookingId === bookingId
+        );
+
+        if (!booking || booking.assignedTo === assignedTo) return;
+
+        try {
+            setBookingLoading(bookingId, "assign", true);
+            setError("");
+            setSuccessMessage("");
+
+            await adminBookingService.assignBooking(
+                bookingId,
+                assignedTo
+            );
+
+            setBookings(previous =>
+                previous.map(item =>
+                    item.bookingId === bookingId
+                        ? { ...item, assignedTo }
+                        : item
+                )
+            );
+
+            setSuccessMessage(
+                `Booking #${bookingId} assigned to ${assignedTo}.`
+            );
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Unable to assign employee."
+            );
+        } finally {
+            setBookingLoading(bookingId, "assign", false);
+        }
     };
 
     return (
@@ -161,10 +287,16 @@ function AdminBookings() {
                 </div>
             </div>
 
-            {/* Error Message */}
+            {/* Messages */}
             {error && (
                 <div className="booking-error">
                     {error}
+                </div>
+            )}
+
+            {successMessage && (
+                <div className="booking-success">
+                    {successMessage}
                 </div>
             )}
 
@@ -191,112 +323,213 @@ function AdminBookings() {
                                 <th>Booking</th>
                                 <th>Customer</th>
                                 <th>Car</th>
+                                <th>Owner Details</th>
                                 <th>Rental Period</th>
                                 <th>Pricing</th>
                                 <th>Amount</th>
                                 <th>Status</th>
+                                <th>Assigned To</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            {filteredBookings.map(booking => (
+                            {filteredBookings.map(booking => {
+                                const bookingId = booking.bookingId;
 
-                                <tr key={booking.bookingId}>
+                                const statusLoading =
+                                    !!actionLoading[`${bookingId}-status`];
 
-                                    {/* Booking Details */}
-                                    <td>
-                                        <strong>
-                                            #{booking.bookingId}
-                                        </strong>
+                                const assignLoading =
+                                    !!actionLoading[`${bookingId}-assign`];
 
-                                        <small>
-                                            {formatDate(booking.createdAt)}
-                                        </small>
-                                    </td>
+                                return (
+                                    <tr key={bookingId}>
 
-                                    {/* Customer Details */}
-                                    <td>
-                                        <strong>
-                                            {booking.customerName}
-                                        </strong>
-
-                                        {booking.customerPhone ? (
-                                            <a
-                                                href={`tel:${booking.customerPhone}`}
-                                                className="booking-customer-phone"
-                                                title="Call customer"
-                                            >
-                                                <span>📞</span>
-                                                {booking.customerPhone}
-                                            </a>
-                                        ) : (
-                                            <small className="booking-no-phone">
-                                                Phone not available
+                                        {/* Booking Details */}
+                                        <td>
+                                            <strong>#{bookingId}</strong>
+                                            <small>
+                                                {formatDate(booking.createdAt)}
                                             </small>
-                                        )}
+                                        </td>
 
-                                        <small>
-                                            Customer ID: {booking.customerId}
-                                        </small>
-                                    </td>
+                                        {/* Customer Details */}
+                                        <td>
+                                            <strong>
+                                                {booking.customerName}
+                                            </strong>
 
-                                    {/* Car Details */}
-                                    <td>
-                                        <strong>
-                                            {booking.carBrand} {booking.carModel}
-                                        </strong>
+                                            {booking.customerPhone ? (
+                                                <a
+                                                    href={`tel:${booking.customerPhone}`}
+                                                    className="booking-customer-phone"
+                                                    title="Call customer"
+                                                >
+                                                    <span>📞</span>
+                                                    {booking.customerPhone}
+                                                </a>
+                                            ) : (
+                                                <small className="booking-no-phone">
+                                                    Phone not available
+                                                </small>
+                                            )}
 
-                                        <small>
-                                            {booking.manufacturingYear}
-                                        </small>
+                                            <small>
+                                                Customer ID: {booking.customerId}
+                                            </small>
+                                        </td>
 
-                                        <small>
-                                            Car ID: {booking.carId}
-                                        </small>
-                                    </td>
+                                        {/* Car Details */}
+                                        <td>
+                                            <strong>
+                                                {booking.carBrand} {booking.carModel}
+                                            </strong>
 
-                                    {/* Rental Period */}
-                                    <td>
-                                        <strong>
-                                            Pickup: {formatDate(booking.pickupDateTime)}
-                                        </strong>
+                                            <small>
+                                                {booking.manufacturingYear}
+                                            </small>
 
-                                        <small>
-                                            Return: {formatDate(booking.returnDateTime)}
-                                        </small>
-                                    </td>
+                                            <small>
+                                                Car ID: {booking.carId}
+                                            </small>
+                                        </td>
 
-                                    {/* Pricing Details */}
-                                    <td>
-                                        <strong>
-                                            {booking.pricingType?.replace("_", " ")}
-                                        </strong>
+                                        {/* Car Owner Details */}
+                                        <td>
+                                            <strong>
+                                                {getDisplayValue(booking.carOwnerName)}
+                                            </strong>
 
-                                        <small>
-                                            {booking.rentalType?.replace("_", " ")}
-                                        </small>
-                                    </td>
+                                            {booking.carOwnerMobileNumber &&
+                                            String(booking.carOwnerMobileNumber).trim() ? (
+                                                <a
+                                                    href={`tel:${booking.carOwnerMobileNumber}`}
+                                                    className="booking-owner-phone"
+                                                    title="Call car owner"
+                                                >
+                                                    📞 {booking.carOwnerMobileNumber}
+                                                </a>
+                                            ) : (
+                                                <small className="booking-no-phone">
+                                                    NA
+                                                </small>
+                                            )}
+                                        </td>
 
-                                    {/* Amount */}
-                                    <td>
-                                        <strong>
-                                            {formatCurrency(booking.totalAmount)}
-                                        </strong>
+                                        {/* Rental Period */}
+                                        <td>
+                                            <strong>
+                                                Pickup: {formatDate(booking.pickupDateTime)}
+                                            </strong>
 
-                                        <small>
-                                            Base rate: {formatCurrency(booking.unitPrice)}
-                                        </small>
-                                    </td>
+                                            <small>
+                                                Return: {formatDate(booking.returnDateTime)}
+                                            </small>
+                                        </td>
 
-                                    {/* Booking Status */}
-                                    <td>
-                                        <span className={getStatusClass(booking.status)}>
-                                            {booking.status}
-                                        </span>
-                                    </td>
+                                        {/* Pricing Details */}
+                                        <td>
+                                            <strong>
+                                                {booking.pricingType?.replace("_", " ")}
+                                            </strong>
 
-                                </tr>
-                            ))}
+                                            <small>
+                                                {booking.rentalType?.replace("_", " ")}
+                                            </small>
+                                        </td>
+
+                                        {/* Amount */}
+                                        <td>
+                                            <strong>
+                                                {formatCurrency(booking.totalAmount)}
+                                            </strong>
+
+                                            <small>
+                                                Base rate: {formatCurrency(booking.unitPrice)}
+                                            </small>
+                                        </td>
+
+                                        {/* Booking Status */}
+                                        <td>
+                                            <span className={getStatusClass(booking.status)}>
+                                                {booking.status}
+                                            </span>
+                                        </td>
+
+                                        {/* Assigned Employee */}
+                                        <td>
+                                            <select
+                                                className="booking-assigned-select"
+                                                value={booking.assignedTo || ""}
+                                                disabled={assignLoading}
+                                                onChange={(event) =>
+                                                    handleAssign(
+                                                        bookingId,
+                                                        event.target.value
+                                                    )
+                                                }
+                                            >
+                                                <option value="">
+                                                    Unassigned
+                                                </option>
+
+                                                {EMPLOYEES.map(employee => (
+                                                    <option
+                                                        key={employee}
+                                                        value={employee}
+                                                    >
+                                                        {employee}
+                                                    </option>
+                                                ))}
+                                            </select>
+
+                                            {assignLoading && (
+                                                <small>Saving...</small>
+                                            )}
+                                        </td>
+
+                                        {/* Approve / Reject Actions */}
+                                        <td>
+                                            {booking.status === "PENDING" ? (
+                                                <div className="booking-action-buttons">
+
+                                                    <button
+                                                        type="button"
+                                                        className="booking-approve-btn"
+                                                        title="Approve booking"
+                                                        aria-label={`Approve booking ${bookingId}`}
+                                                        disabled={statusLoading}
+                                                        onClick={() => handleApprove(booking)}
+                                                    >
+                                                        ✓
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="booking-reject-btn"
+                                                        title="Reject booking"
+                                                        aria-label={`Reject booking ${bookingId}`}
+                                                        disabled={statusLoading}
+                                                        onClick={() => handleReject(booking)}
+                                                    >
+                                                        ✕
+                                                    </button>
+
+                                                    {statusLoading && (
+                                                        <small>Processing...</small>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <small className="booking-processed">
+                                                    Processed
+                                                </small>
+                                            )}
+                                        </td>
+
+                                    </tr>
+                                );
+                            })}
                         </tbody>
 
                     </table>

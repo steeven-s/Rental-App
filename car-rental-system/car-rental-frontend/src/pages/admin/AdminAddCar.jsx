@@ -9,6 +9,8 @@ function AdminAddCar() {
         model: "",
         manufacturingYear: "",
         registrationNumber: "",
+        ownerName: "",
+        ownerMobileNumber: "",
         category: "",
         fuelType: "",
         transmission: "",
@@ -62,6 +64,8 @@ function AdminAddCar() {
                 model: formData.model.trim(),
                 manufacturingYear: Number(formData.manufacturingYear),
                 registrationNumber: formData.registrationNumber.trim().toUpperCase(),
+                ownerName: formData.ownerName.trim(),
+                ownerMobileNumber: formData.ownerMobileNumber.trim(),
                 seatingCapacity: Number(formData.seatingCapacity),
                 pricing: {
                     hourlyPrice: Number(formData.pricing.hourlyPrice),
@@ -104,6 +108,12 @@ function AdminAddCar() {
         gap: "6px"
     };
 
+    const gridStyle = {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+        gap: "18px"
+    };
+
     const pricingFields = [
         ["hourlyPrice", "Hourly Price"],
         ["halfDayPrice", "Half-Day Price"],
@@ -128,13 +138,10 @@ function AdminAddCar() {
 
             <form onSubmit={handleSubmit}>
 
+                {/* BASIC INFORMATION */}
                 <h3>Basic Information</h3>
 
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: "18px"
-                }}>
+                <div style={gridStyle}>
 
                     <div style={fieldStyle}>
                         <label>Brand</label>
@@ -166,6 +173,8 @@ function AdminAddCar() {
                             style={inputStyle}
                             type="number"
                             name="manufacturingYear"
+                            min="1900"
+                            max="2100"
                             value={formData.manufacturingYear}
                             onChange={handleChange}
                             required
@@ -251,6 +260,44 @@ function AdminAddCar() {
 
                 </div>
 
+                {/* OWNER INFORMATION */}
+                <h3 style={{ marginTop: "30px" }}>Owner Information</h3>
+
+                <div style={gridStyle}>
+
+                    <div style={fieldStyle}>
+                        <label>Car Owner Name</label>
+                        <input
+                            style={inputStyle}
+                            type="text"
+                            name="ownerName"
+                            value={formData.ownerName}
+                            onChange={handleChange}
+                            placeholder="Enter car owner's name"
+                            maxLength="150"
+                            required
+                        />
+                    </div>
+
+                    <div style={fieldStyle}>
+                        <label>Owner Mobile Number</label>
+                        <input
+                            style={inputStyle}
+                            type="tel"
+                            name="ownerMobileNumber"
+                            value={formData.ownerMobileNumber}
+                            onChange={handleChange}
+                            placeholder="e.g. 9876543210"
+                            pattern="^\+?[0-9]{10,15}$"
+                            title="Enter 10 to 15 digits, optionally starting with +"
+                            maxLength="16"
+                            required
+                        />
+                    </div>
+
+                </div>
+
+                {/* DESCRIPTION */}
                 <h3 style={{ marginTop: "30px" }}>Description</h3>
 
                 <textarea
@@ -261,13 +308,10 @@ function AdminAddCar() {
                     placeholder="Enter car description"
                 />
 
+                {/* PRICING */}
                 <h3 style={{ marginTop: "30px" }}>Rental Pricing</h3>
 
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: "18px"
-                }}>
+                <div style={gridStyle}>
 
                     {pricingFields.map(([name, label]) => (
                         <div key={name} style={fieldStyle}>

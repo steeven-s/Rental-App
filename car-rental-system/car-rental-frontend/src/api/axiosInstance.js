@@ -2,7 +2,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-    baseURL: "https://scan-backend-1-yes3.onrender.com/api",
+    baseURL: "http://localhost:8080/api",
+    // baseURL: "https://scan-backend-1-yes3.onrender.com/api",
     headers: {
         "Content-Type": "application/json"
     }

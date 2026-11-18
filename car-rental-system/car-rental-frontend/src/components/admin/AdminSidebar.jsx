@@ -1,7 +1,7 @@
 
 import { NavLink, useNavigate } from "react-router-dom";
 
-function AdminSidebar() {
+function AdminSidebar({ isOpen, onClose }) {
 
     const navigate = useNavigate();
 
@@ -13,62 +13,50 @@ function AdminSidebar() {
         { name: "Payments", path: "/admin/payments", icon: "💳" }
     ];
 
+    const handleLogout = () => {
+        sessionStorage.removeItem("accessToken");
+        sessionStorage.removeItem("user");
+        navigate("/login");
+        onClose();
+    };
+
     return (
-        <aside style={{
-            width: "250px",
-            background: "#172033",
-            color: "white",
-            padding: "24px 16px"
-        }}>
+        <aside className={`admin-sidebar ${isOpen ? "open" : ""}`}>
 
-            <h2 style={{ marginBottom: "35px" }}>
-                Car Rental
-            </h2>
+            <div className="admin-sidebar-heading">
+                <h2>Car Rental</h2>
 
-            <p style={{
-                color: "#94a3b8",
-                fontSize: "12px",
-                marginBottom: "15px"
-            }}>
+                <button
+                    className="admin-sidebar-close"
+                    onClick={onClose}
+                    aria-label="Close admin menu"
+                >
+                    ✕
+                </button>
+            </div>
+
+            <p className="admin-sidebar-label">
                 ADMIN MENU
             </p>
 
-            {menuItems.map(item => (
-
-                <NavLink
-                    key={item.path}
-                    to={item.path}
-                    style={({ isActive }) => ({
-                        display: "block",
-                        padding: "13px",
-                        marginBottom: "8px",
-                        borderRadius: "8px",
-                        textDecoration: "none",
-                        color: "white",
-                        background: isActive ? "#334155" : "transparent"
-                    })}
-                >
-                    {item.icon} &nbsp; {item.name}
-                </NavLink>
-
-            ))}
+            <nav>
+                {menuItems.map(item => (
+                    <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={onClose}
+                        className={({ isActive }) =>
+                            `admin-nav-link ${isActive ? "active" : ""}`
+                        }
+                    >
+                        {item.icon} &nbsp; {item.name}
+                    </NavLink>
+                ))}
+            </nav>
 
             <button
-                onClick={() => {
-                    sessionStorage.removeItem("accessToken");
-                    sessionStorage.removeItem("user");
-                    navigate("/login");
-                }}
-                style={{
-                    marginTop: "40px",
-                    width: "100%",
-                    padding: "12px",
-                    background: "#dc2626",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer"
-                }}
+                className="admin-logout-btn"
+                onClick={handleLogout}
             >
                 Logout
             </button>
