@@ -310,3 +310,235 @@
         height: 220px;
     }
 }
+
+/* ================= SCAN PUBLIC HEADER ================= */
+
+.scan-public-header {
+    width: 100%;
+    min-height: 82px;
+    padding: 12px 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border-bottom: 1px solid #e8e8e8;
+    box-sizing: border-box;
+}
+
+.scan-public-brand {
+    cursor: pointer;
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.scan-brand-name {
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #111827;
+}
+
+.scan-brand-subtitle {
+    margin-top: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #64748b;
+}
+
+.scan-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.scan-login-btn,
+.scan-signup-btn {
+    padding: 11px 23px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.scan-login-btn {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #cbd5e1;
+}
+
+.scan-login-btn:hover {
+    background: #f1f5f9;
+}
+
+.scan-signup-btn {
+    background: #111827;
+    color: #ffffff;
+    border: 1px solid #111827;
+}
+
+.scan-signup-btn:hover {
+    background: #334155;
+}
+
+.scan-tagline {
+    margin-top: 20px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #111827;
+}
+
+/* ================= AUTH POPUP ================= */
+
+.scan-auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+}
+
+.scan-auth-modal {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    padding: 38px 32px 30px;
+    background: #ffffff;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+    animation: scanModalAppear 0.2s ease-out;
+}
+
+@keyframes scanModalAppear {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.scan-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 25px;
+    cursor: pointer;
+}
+
+.scan-modal-close:hover {
+    background: #e2e8f0;
+}
+
+.scan-modal-logo {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: #111827;
+}
+
+.scan-auth-modal h2 {
+    margin: 17px 0 10px;
+    font-size: 23px;
+    color: #111827;
+}
+
+.scan-auth-modal p {
+    margin: 0 0 25px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.scan-modal-login,
+.scan-modal-signup {
+    width: 100%;
+    padding: 13px 18px;
+    margin-top: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.scan-modal-login {
+    background: #111827;
+    color: #ffffff;
+    border: 1px solid #111827;
+}
+
+.scan-modal-login:hover {
+    background: #334155;
+}
+
+.scan-modal-signup {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #cbd5e1;
+}
+
+.scan-modal-signup:hover {
+    background: #f1f5f9;
+}
+
+.scan-modal-footer {
+    display: block;
+    margin-top: 23px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+/* ================= RESPONSIVE HEADER AND POPUP ================= */
+
+@media (max-width: 600px) {
+    .scan-public-header {
+        min-height: 70px;
+        padding: 10px 4%;
+    }
+
+    .scan-brand-name {
+        font-size: 27px;
+    }
+
+    .scan-brand-subtitle {
+        font-size: 8px;
+        letter-spacing: 1.5px;
+    }
+
+    .scan-header-actions {
+        gap: 7px;
+    }
+
+    .scan-login-btn,
+    .scan-signup-btn {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+
+    .scan-auth-modal {
+        padding: 35px 22px 25px;
+    }
+
+    .scan-auth-modal h2 {
+        font-size: 20px;
+    }
+}

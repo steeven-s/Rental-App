@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import authService from "../services/authService";
 import Brand from "../components/Brand";
 import "./Login.css";
 
 function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -43,9 +44,21 @@ function Login() {
             });
 
             if (response.role === "ADMIN") {
-                navigate("/admin/dashboard");
+                navigate("/admin/dashboard", { replace: true });
             } else {
-                navigate("/customer/dashboard");
+                const requestedPage = location.state?.from;
+
+                // Allow customer redirects only to internal customer routes
+                const isValidCustomerRoute =
+                    typeof requestedPage === "string" &&
+                    requestedPage.startsWith("/customer/") &&
+                    !requestedPage.startsWith("//");
+
+                if (isValidCustomerRoute) {
+                    navigate(requestedPage, { replace: true });
+                } else {
+                    navigate("/customer/dashboard", { replace: true });
+                }
             }
 
         } catch (err) {
@@ -122,7 +135,12 @@ function Login() {
 
                 <p className="register-link">
                     Don't have an account?{" "}
-                    <Link to="/register">Register</Link>
+                    <Link
+                        to="/register"
+                        state={location.state}
+                    >
+                        Register
+                    </Link>
                 </p>
 
             </div>

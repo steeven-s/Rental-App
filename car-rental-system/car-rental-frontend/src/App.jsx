@@ -32,9 +32,10 @@ function App() {
 
                 {/* ================= PUBLIC PAGES ================= */}
 
+                {/* Public homepage - visitors can browse cars */}
                 <Route
                     path="/"
-                    element={<Navigate to="/login" replace />}
+                    element={<CustomerCars />}
                 />
 
                 <Route
@@ -59,6 +60,7 @@ function App() {
                     }
                 />
 
+                {/* Protected customer car listing */}
                 <Route
                     path="/customer/cars"
                     element={
@@ -107,43 +109,43 @@ function App() {
                     }
                 >
 
-                    {/* Default admin route */}
                     <Route
                         index
                         element={<Navigate to="dashboard" replace />}
                     />
 
-                    {/* Admin Dashboard */}
                     <Route
                         path="dashboard"
                         element={<AdminDashboard />}
                     />
 
-                    {/* Car Management */}
                     <Route
                         path="cars"
                         element={<AdminCars />}
                     />
 
-                    {/* Add Car */}
                     <Route
                         path="cars/add"
                         element={<AdminAddCar />}
                     />
 
-                    {/* Edit Car */}
                     <Route
                         path="cars/edit/:id"
                         element={<AdminEditCar />}
                     />
 
-                    {/* Booking Management */}
                     <Route
                         path="bookings"
                         element={<AdminBookings />}
                     />
 
                 </Route>
+
+                {/* Unknown routes */}
+                <Route
+                    path="*"
+                    element={<Navigate to="/" replace />}
+                />
 
             </Routes>
         </BrowserRouter>

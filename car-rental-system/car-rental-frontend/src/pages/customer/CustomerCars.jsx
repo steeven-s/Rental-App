@@ -2,10 +2,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import customerCarService from "../../services/CustomerCarService";
+import authService from "../../services/authService";
 import "./CustomerCars.css";
 
 function CustomerCars() {
-
     const navigate = useNavigate();
 
     const [cars, setCars] = useState([]);
@@ -17,8 +17,37 @@ function CustomerCars() {
     const [fuelType, setFuelType] = useState("ALL");
     const [transmission, setTransmission] = useState("ALL");
 
-    useEffect(() => {
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [selectedCarId, setSelectedCarId] = useState(null);
 
+    // Authentication state
+    const [currentUser, setCurrentUser] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+
+    useEffect(() => {
+        const checkAuthentication = async () => {
+            try {
+                const token = sessionStorage.getItem("accessToken");
+
+                if (!token) {
+                    setCurrentUser(null);
+                    return;
+                }
+
+                const user = await authService.getCurrentUser();
+                setCurrentUser(user);
+            } catch (err) {
+                console.error("Authentication check failed:", err);
+                setCurrentUser(null);
+            } finally {
+                setAuthLoading(false);
+            }
+        };
+
+        checkAuthentication();
+    }, []);
+
+    useEffect(() => {
         const fetchCars = async () => {
             try {
                 setLoading(true);
@@ -26,7 +55,6 @@ function CustomerCars() {
 
                 const data = await customerCarService.getAvailableCars();
                 setCars(data);
-
             } catch (err) {
                 console.error("Unable to fetch cars:", err);
 
@@ -34,20 +62,16 @@ function CustomerCars() {
                     err.response?.data?.message ||
                     "Unable to load available cars. Please try again."
                 );
-
             } finally {
                 setLoading(false);
             }
         };
 
         fetchCars();
-
     }, []);
 
     const filteredCars = useMemo(() => {
-
         return cars.filter(car => {
-
             const searchText = search.toLowerCase().trim();
 
             const matchesSearch =
@@ -71,13 +95,10 @@ function CustomerCars() {
                 matchesFuel &&
                 matchesTransmission
             );
-
         });
-
     }, [cars, search, category, fuelType, transmission]);
 
     const getPrimaryImage = (car) => {
-
         const primaryImage = car.images?.find(
             image => image.isPrimary
         );
@@ -94,13 +115,115 @@ function CustomerCars() {
         setTransmission("ALL");
     };
 
-    return (
+    // View car details
+    const handleViewDetails = (carId) => {
+        if (currentUser) {
+            navigate(`/customer/cars/${carId}`);
+            return;
+        }
 
+        setSelectedCarId(carId);
+        setShowAuthModal(true);
+    };
+
+    // Login or registration navigation
+    const handleAuthentication = (path) => {
+        const destination = selectedCarId
+            ? `/customer/cars/${selectedCarId}`
+            : "/customer/cars";
+
+        navigate(path, {
+            state: { from: destination }
+        });
+    };
+
+    // Dashboard navigation based on role
+    const handleDashboard = () => {
+        if (currentUser?.role === "ADMIN") {
+            navigate("/admin/dashboard");
+        } else {
+            navigate("/customer/dashboard");
+        }
+    };
+
+    // Logout
+    const handleLogout = () => {
+        authService.logout();
+        setCurrentUser(null);
+        setShowAuthModal(false);
+        setSelectedCarId(null);
+        navigate("/", { replace: true });
+    };
+
+    return (
         <div className="customer-cars-page">
+
+            {/* HEADER */}
+            <header className="scan-public-header">
+
+                <div
+                    className="scan-public-brand"
+                    onClick={() => navigate("/")}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") navigate("/");
+                    }}
+                >
+                    <div className="scan-brand-name">
+                        SCAN
+                    </div>
+
+                    <div className="scan-brand-subtitle">
+                        RENTALS AND TOURISM
+                    </div>
+                </div>
+
+                <div className="scan-header-actions">
+
+                    {!authLoading && !currentUser && (
+                        <>
+                            <button
+                                className="scan-login-btn"
+                                onClick={() => handleAuthentication("/login")}
+                            >
+                                Login
+                            </button>
+
+                            <button
+                                className="scan-signup-btn"
+                                onClick={() => handleAuthentication("/register")}
+                            >
+                                Sign Up
+                            </button>
+                        </>
+                    )}
+
+                    {!authLoading && currentUser && (
+                        <>
+                            <button
+                                className="scan-login-btn"
+                                onClick={handleDashboard}
+                            >
+                                {currentUser.role === "ADMIN"
+                                    ? "Admin Dashboard"
+                                    : "My Dashboard"}
+                            </button>
+
+                            <button
+                                className="scan-signup-btn"
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </button>
+                        </>
+                    )}
+
+                </div>
+            </header>
 
             {/* HERO SECTION */}
             <section className="cars-hero">
-
                 <div>
                     <span className="cars-hero-tag">
                         FIND YOUR PERFECT RIDE
@@ -114,13 +237,15 @@ function CustomerCars() {
                         Find the right car for your next journey.
                         Comfortable rides, transparent pricing and easy booking.
                     </p>
-                </div>
 
+                    <div className="scan-tagline">
+                        SCAN cars. SCAN the town.
+                    </div>
+                </div>
             </section>
 
             {/* PAGE HEADING */}
             <div className="cars-section-heading">
-
                 <div>
                     <h2>Available Cars</h2>
                     <p>
@@ -131,10 +256,9 @@ function CustomerCars() {
                 <span className="cars-result-count">
                     {filteredCars.length} Vehicles
                 </span>
-
             </div>
 
-            {/* FILTER SECTION */}
+            {/* FILTERS */}
             <div className="cars-filter-panel">
 
                 <input
@@ -183,7 +307,6 @@ function CustomerCars() {
                 >
                     Reset
                 </button>
-
             </div>
 
             {/* LOADING */}
@@ -220,20 +343,16 @@ function CustomerCars() {
 
             {/* CAR GRID */}
             {!loading && !error && filteredCars.length > 0 && (
-
                 <div className="customer-car-grid">
 
                     {filteredCars.map(car => {
-
                         const image = getPrimaryImage(car);
 
                         return (
-
                             <article
                                 className="customer-car-card"
                                 key={car.id}
                             >
-
                                 <div className="customer-car-image">
 
                                     {image ? (
@@ -252,7 +371,6 @@ function CustomerCars() {
                                     <span className="car-available-badge">
                                         Available
                                     </span>
-
                                 </div>
 
                                 <div className="customer-car-content">
@@ -270,47 +388,89 @@ function CustomerCars() {
                                     </div>
 
                                     <div className="customer-car-specs">
-
                                         <span>👥 {car.seatingCapacity} Seats</span>
                                         <span>⛽ {car.fuelType}</span>
                                         <span>⚙ {car.transmission}</span>
                                         <span>🚘 {car.category}</span>
-
                                     </div>
 
                                     <div className="customer-car-footer">
 
                                         <div className="car-price">
-
                                             <strong>
                                                 ₹{car.pricing?.dailyPrice ?? "N/A"}
                                             </strong>
-
                                             <span>/ day</span>
-
                                         </div>
 
                                         <button
-                                            onClick={() =>
-                                                navigate(`/customer/cars/${car.id}`)
-                                            }
+                                            onClick={() => handleViewDetails(car.id)}
                                             className="car-details-btn"
                                         >
                                             View Details →
                                         </button>
 
                                     </div>
-
                                 </div>
-
                             </article>
-
                         );
-
                     })}
-
                 </div>
+            )}
 
+            {/* AUTHENTICATION POPUP */}
+            {showAuthModal && (
+                <div
+                    className="scan-auth-overlay"
+                    onClick={() => setShowAuthModal(false)}
+                >
+                    <div
+                        className="scan-auth-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="scan-auth-title"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button
+                            className="scan-modal-close"
+                            onClick={() => setShowAuthModal(false)}
+                            aria-label="Close popup"
+                        >
+                            ×
+                        </button>
+
+                        <div className="scan-modal-logo">
+                            SCAN
+                        </div>
+
+                        <h2 id="scan-auth-title">
+                            Your journey starts here!
+                        </h2>
+
+                        <p>
+                            Please log in or create an account to view
+                            car details and continue with your booking.
+                        </p>
+
+                        <button
+                            className="scan-modal-login"
+                            onClick={() => handleAuthentication("/login")}
+                        >
+                            Login to Your Account
+                        </button>
+
+                        <button
+                            className="scan-modal-signup"
+                            onClick={() => handleAuthentication("/register")}
+                        >
+                            Create a New Account
+                        </button>
+
+                        <span className="scan-modal-footer">
+                            SCAN rentals and tourism
+                        </span>
+                    </div>
+                </div>
             )}
 
         </div>

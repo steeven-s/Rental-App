@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import authService from "../services/authService";
 import Brand from "../components/Brand";
 import "./Login.css";
 
 function Register() {
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -47,9 +48,9 @@ function Register() {
 
         if (
             formData.phone &&
-            !/^[0-9]{10,15}$/.test(formData.phone)
+            !/^[0-9]{10}$/.test(formData.phone)
         ) {
-            setError("Phone number must contain 10 to 15 digits.");
+            setError("Phone number must contain 10 digits.");
             return;
         }
 
@@ -66,7 +67,10 @@ function Register() {
             setSuccess("Registration successful! Redirecting to login...");
 
             setTimeout(() => {
-                navigate("/login");
+                navigate("/login", {
+                    replace: true,
+                    state: location.state
+                });
             }, 1200);
 
         } catch (err) {
@@ -148,10 +152,11 @@ function Register() {
                         <input
                             type="tel"
                             name="phone"
-                            placeholder="Enter phone number (optional)"
+                            placeholder="Enter phone number"
                             value={formData.phone}
                             onChange={handleChange}
                             autoComplete="tel"
+                            required
                         />
                     </div>
 
@@ -191,7 +196,12 @@ function Register() {
 
                 <p className="register-link">
                     Already have an account?{" "}
-                    <Link to="/login">Login</Link>
+                    <Link
+                        to="/login"
+                        state={location.state}
+                    >
+                        Login
+                    </Link>
                 </p>
 
             </div>
